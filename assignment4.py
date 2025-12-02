@@ -170,8 +170,8 @@ def min_cost_connecting_edges(
     return minCost
 
 
-
-
+'''
+#Test Code
 list1 = [(0,0), (1,1), (2,2), (3,3)]
 list2 = [(1,2), (1,3), (2,3)]
 print(min_cost_connecting_edges(list1, list2))
@@ -191,3 +191,4 @@ print(min_cost_connecting_edges(list1, list2))
 list1 = [(0,1), (10,901), (8590,2132), (54124,1662), (12124,21341)]
 list2 = [(0,1), (0,2), (0,3), (0,4)]
 print(min_cost_connecting_edges(list1, list2))
+'''
