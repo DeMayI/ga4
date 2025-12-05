@@ -1,0 +1,172 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+
+
+\title{CS 325 Group Assignment 4}
+\author{Isaac DeMay, Graham Brown, Carter Cripe}
+\date{December 4th, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Algorithm Description}
+\subsection{The problem}
+Our algorithm is designed to solve the problem of determining the minimum additional cost required to fully connect a weighted graph in which some edges have already been selected. We are given a graph $G = (V, E)$ and a subset of edges $E' \subseteq E$ that must be included from the start. These preselected edges may form several disconnected components, and on their own they do not necessarily connect all vertices. Our objective is to choose a set of edges $E^* \subseteq E$ of minimum total weight such that adding them to the already--selected edges produces a connected graph, that is, so that $G' = (V, E' \cup E^*)$ is connected. In this setting, the existing edges in $E'$ serve as an initial structure, and our task is to determine the cheapest way to bridge the gaps between its components.
+
+\subsection{The algorithm}
+Our algorithm computes the minimum--cost set of edges needed to make a weighted graph connected when some edges are already preselected. The preselected edges $E'$ form an initial forest, possibly with many disconnected components. We extend this forest to a fully connected graph by repeatedly finding, for each component, the cheapest edge that connects it to a different component. This is the structure of Bor\r{u}vka's algorithm, applied to the initial partial graph $(V, E')$.
+
+
+\begin{algorithm}[H]
+\caption{Initialization of the Working Graph}
+\begin{algorithmic}[1]
+\Function{Initialize}{$V, E, E'$}
+    \State $G' \gets$ graph with vertex set $V$ and edge set $E'$
+    \For{each vertex $v$ in $V$}
+        \State $v.\textit{component} \gets 0$
+        \State $v.\textit{marked} \gets \textbf{False}$
+    \EndFor
+    \State $c \gets$ \Call{CountAndLabel}{$G'$}
+    \State \Return $(G', c)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{CountAndLabel: Connected Components in $G'$}
+\begin{algorithmic}[1]
+\Function{CountAndLabel}{$G'$}
+    \State $c \gets 0$
+    \For{each vertex $v$ in $G'.\textit{vertices}$}
+        \State $v.\textit{marked} \gets \textbf{False}$
+    \EndFor
+    \For{each vertex $v$ in $G'.\textit{vertices}$}
+        \If{$v.\textit{marked} = \textbf{False}$}
+            \State $c \gets c + 1$
+            \State create empty stack $S$
+            \State push $v$ onto $S$
+            \While{$S$ is not empty}
+                \State pop $u$ from $S$
+                \If{$u.\textit{marked} = \textbf{False}$}
+                    \State $u.\textit{marked} \gets \textbf{True}$
+                    \State $u.\textit{component} \gets c$
+                    \State $A \gets G'.$\Call{AdjacentVertices}{$u$}
+                    \For{each $w$ in $A$}
+                        \If{$w.\textit{marked} = \textbf{False}$}
+                            \State push $w$ onto $S$
+                        \EndIf
+                    \EndFor
+                \EndIf
+            \EndWhile
+        \EndIf
+    \EndFor
+    \State \Return $c$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection*{Initialization}
+
+We begin by constructing a list of all edges in the graph $G = (V,E)$, along with their associated weights. The subset $E'$ of already--selected edges is inserted into the working graph $G' = (V, E')$, which initially consists of as many connected components as the forest defined by $E'$ contains. Each vertex $v \in V$ stores a component label indicating which connected component of $G'$ it currently belongs to. These labels are computed using a depth--first or breadth--first search over $G'$.
+
+\subsection*{Selecting Minimum Outgoing Edges}
+
+Following Bor\r{u}vka's method, the algorithm proceeds in rounds. During each round, we identify, for every connected component of $G'$, the cheapest edge in $E$ that has exactly one endpoint inside the component and the other endpoint outside it. Such an edge is called a \emph{safe edge}, since adding it to $G'$ cannot create a cycle but will merge two components. To find these edges, the algorithm scans the entire edge set $E$ and compares the component labels of their endpoints. For each component, the edge of minimum weight that leads to a different component is stored as its candidate safe edge.
+
+\subsection*{Merging Components}
+
+Once the set of safe edges has been identified, each component adds its selected safe edge to $G'$. This step merges components together, reducing the total number of connected components. After these edges are added, the component labels must be recomputed, again using a graph traversal that assigns a unique label to each connected component now present in $G'$.
+
+\subsection*{Termination}
+
+The algorithm repeats the process of scanning for safe edges, adding them, and relabeling components. In each round, the number of connected components decreases, and Bor\r{u}vka's analysis guarantees that the number of components is at least halved in every iteration. When only one connected component remains, the graph $G' = (V, E' \cup E^*)$ is fully connected. At this point, all edges added after initialization constitute the desired minimum--cost set $E^*$.
+
+\subsection*{Output}
+
+The algorithm outputs the set $E^*$ of edges added during the Bor\r{u}vka process, along with its total weight. Since no unnecessary edges are added and each chosen edge is the cheapest that connects distinct components, the resulting set $E^*$ has minimum total weight among all sets of edges that complete the connectivity of the graph.
+
+
+\section{Algorithm Correctness}
+
+
+\section{Time Complexity Analysis}
+Let $n$ be the number of points (vertices), and let $m$ be the number of
+possible edges considered by the algorithm.  Because the algorithm constructs
+all $\binom{n}{2} = \Theta(n^2)$ pairs of points, we have
+\[
+    m = \Theta(n^2).
+\]
+
+\subsection*{Edge Construction}
+
+The algorithm iterates over all unordered pairs $(i,j)$ with $i < j$.  
+For each pair it computes a Manhattan distance and creates either a free edge
+(cost $0$) or a weighted edge.  
+Thus the edge–construction phase performs
+\[
+    T_1(n) = \Theta(n^2)
+\]
+work.
+
+\subsection*{Borůvka's Algorithm}
+
+Borůvka’s algorithm repeatedly contracts connected components by adding one
+minimum outgoing edge per component.  Each iteration involves two major
+operations: (1) computing connected components, and (2) scanning all edges to
+find the cheapest outgoing edges.
+
+\paragraph{Component labeling.}
+Computing connected components uses a DFS or BFS over the current graph.  
+At every stage the graph contains no more than $n$ vertices and no more than
+$m = \Theta(n^2)$ edges.  
+The traversal touches every edge adjacent to a visited vertex, giving
+\[
+    T_{\mathrm{label}}(n) = O(n + m) = O(n^2).
+\]
+
+\paragraph{Finding safe edges.}
+In each Borůvka round the algorithm scans the entire list of $m$ edges to
+identify the cheapest edge leaving each component.  
+Thus every round spends
+\[
+    T_{\mathrm{scan}}(n) = \Theta(m) = \Theta(n^2)
+\]
+time on this step.
+
+\paragraph{Number of rounds.}
+Borůvka’s algorithm guarantees that the number of connected components at
+least halves in every iteration.  
+Therefore the total number of iterations is
+\[
+    O(\log n).
+\]
+
+\subsection*{Total Running Time}
+
+Each Borůvka round costs $\Theta(n^2)$ time, and there are $O(\log n)$
+rounds.  
+Combining this with the initial $\Theta(n^2)$ cost of generating all candidate
+edges yields
+\[
+    T(n)
+    = \Theta(n^2) + O(\log n) \cdot \Theta(n^2)
+    = \Theta(n^2 \log n).
+\]
+
+\paragraph{Summary.}
+The full algorithm runs in
+\[
+    \boxed{\Theta(n^2 \log n)}
+\]
+time, dominated by the repeated full scans of all $\Theta(n^2)$ possible edges
+over $O(\log n)$ Borůvka iterations.
+
+
+
+
+\end{document}
