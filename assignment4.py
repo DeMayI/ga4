@@ -140,7 +140,7 @@ def min_cost_connecting_edges(
     for i in range(len(Vertices) - 1):
         for j in range(i + 1, len(Vertices)):
             newEdge = edge(Vertices[i].id, Vertices[j].id, -1)
-            if(given_edges.count((i,j)) != 0):
+            if(given_edges.count((i,j)) != 0 or given_edges.count((j,i))):
                 newEdge.cost = 0
                 FreeEdges.append(newEdge)
             else:
